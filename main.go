@@ -1,16 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
 
 
 func main() {
-	getAccountInformation()
+	fmt.Println("Server is running.")
 	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/hello", getHello)
-
+	http.HandleFunc("/stocks", getStocks)
+	
 	err := http.ListenAndServe(":3333", nil)
 	if err != nil {
 		panic(err)
