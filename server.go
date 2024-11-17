@@ -24,6 +24,7 @@ func readLog() string {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	
+	
 	return string(data)
 }
