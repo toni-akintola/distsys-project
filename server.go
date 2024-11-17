@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"encoding/json"
 	"strings"
 )
 
@@ -14,7 +15,7 @@ import (
 // but this might be too much , it is tricky to interface website and database
 type Account struct {
 	Username string `json:"username"`
-	Balance float64 `json:balance"`
+	Balance float64 `json:"balance"`
 }
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +61,7 @@ func readAccounts(filename string) ([]Account, error) {
 	return accounts, nil
 }
 
-func getAccount(account []Account, username string) (*Account, bool) {
+func getAccount(accounts []Account, username string) (*Account, bool) {
 	for i, account := range accounts {
 		// case insensitive
 		if strings.EqualFold(account.Username, username) {
@@ -90,7 +91,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	account, found := getAccount (accounts, username)
 	if !found {
-		http.Error(w, "account not found", httpStatusNotFound)
+		http.Error(w, "account not found", http.StatusNotFound)
 		return
 	}
 	// return account information

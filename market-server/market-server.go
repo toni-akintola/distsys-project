@@ -1,4 +1,4 @@
-package dataserver
+package marketserver
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 )
 
-type DataServer struct {
+type MarketServer struct {
 	data map[string]interface{}
 }
 
@@ -23,6 +23,6 @@ func readLog() map[string]interface{} {
 	return result
 }
 
-func initialize(s DataServer) {
+func initialize(s MarketServer) {
 	s.data = readLog()
 }
