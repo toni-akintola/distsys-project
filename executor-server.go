@@ -1,12 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
-	"encoding/json"
 	"strings"
 )
 
@@ -18,27 +16,7 @@ type Account struct {
 	Balance float64 `json:"balance"`
 }
 
-func getRoot(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("got / request\n")
-	io.WriteString(w, "This is my website!\n")
-}
 
-func getStocks(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("got /hello request\n")
-	s := readLog()
-	io.WriteString(w, s)
-}
-
-func readLog() string {
-	data, err := ioutil.ReadFile("stocks.json")
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	
-	
-	return string(data)
-}
 
 func readAccounts(filename string) ([]Account, error) {
 	file, err := os.Open(filename)
@@ -62,7 +40,7 @@ func readAccounts(filename string) ([]Account, error) {
 }
 
 func getAccount(accounts []Account, username string) (*Account, bool) {
-	for i, account := range accounts {
+	for _, account := range accounts {
 		// case insensitive
 		if strings.EqualFold(account.Username, username) {
 			return &account, true
@@ -89,7 +67,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error reading account data", http.StatusInternalServerError)
 		return
 	}
-	account, found := getAccount (accounts, username)
+	_, found := getAccount (accounts, username)
 	if !found {
 		http.Error(w, "account not found", http.StatusNotFound)
 		return
@@ -98,7 +76,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 	// browser needs to know to expect JSON response
 	w.Header().Set("Content-Type", "application/json")
 	// info to do something with
-	err = json.NewEncoder(w).Encode(user)
+	err = json.NewEncoder(w).Encode(found)
 
 	if err != nil {
 		// throw 500
