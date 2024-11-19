@@ -59,6 +59,8 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "please enter username", http.StatusBadRequest)
 		return
 	}
+	// check username
+	fmt.Printf("received request for username %s\n", username)
 	// pull all account data ... we should require authentication for this
 	accounts, err := readAccounts ("accounts.json")
 
@@ -67,7 +69,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error reading account data", http.StatusInternalServerError)
 		return
 	}
-	_, found := getAccount (accounts, username)
+	info, found := getAccount (accounts, username)
 	if !found {
 		http.Error(w, "account not found", http.StatusNotFound)
 		return
@@ -77,7 +79,14 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// info to do something with
 	err = json.NewEncoder(w).Encode(found)
+	// did we find our account ?
+	if err != nil {
+		// throw 500
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+	}
 
+	err = json.NewEncoder(w).Encode(info)
+	// what does our account look like ?
 	if err != nil {
 		// throw 500
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
