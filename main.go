@@ -13,11 +13,11 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+	marketServer := initializeMarket()
 	fmt.Println("Server is running.")
 	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/stocks", handleGetStock)
+	http.HandleFunc("/stocks", marketServer.handleGetStock)
 	http.HandleFunc("/user/", accountHandler)
-	marketServer := initializeMarket()
 	fmt.Println(marketServer.data)
 	// I'm working on the student machines and this is in the range of ports that work LOL
 	err := http.ListenAndServe(":9444", nil)

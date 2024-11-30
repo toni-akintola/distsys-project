@@ -9,23 +9,38 @@ import (
 )
 
 type MarketServer struct {
-	data map[string]interface{}
+	data map[string]Stock
 }
 
+type Stock struct {
+	ticker string
+	companyName string
+	assetType string
+	currentPrice float64
+	currency string
+	volume int64
+	lastUpdated string
+	volatility float64
+}
 
-func readLog() map[string]interface{} {
+func readLog() map[string]Stock {
 	data, err := ioutil.ReadFile("stocks.json")
-	var result map[string]interface{}
+	var rawData map[string][]map[string]interface{};
+	var result map[string]Stock
 	if err != nil {
 		fmt.Println(err)
 	}
-	
-	json.Unmarshal([]byte(data), &result)
+	json.Unmarshal([]byte(data), &rawData);
+
+	for stock := range rawData["stocks"] {
+		fmt.Println(rawData["stocks"][stock]);
+	}
+
 	return result
 }
 
-func handleGetStock(w http.ResponseWriter, r *http.Request) {
-	var result map[string]interface{}
+func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
+	var result map[string]Stock
 	body, err := io.ReadAll(r.Body)
 	json.Unmarshal(body, &result)
 
@@ -33,10 +48,13 @@ func handleGetStock(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	fmt.Println(result)
+	var tickerStock Stock = result["ticker"];
+
+	fmt.Println(result, s.getStock(tickerStock.ticker));
 }
-func getStock(s MarketServer, ticker string) interface{} {
-	return s.data[ticker]
+
+func (s MarketServer) getStock(ticker string) Stock {
+	return s.data[ticker];
 }
 
 
