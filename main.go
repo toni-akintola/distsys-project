@@ -16,13 +16,14 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 func main() {
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
+	server, _ := newAccountServer()
 	fmt.Println("Server is running.")
 	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/stocks", marketServer.handleGetStock)
-	http.HandleFunc("/user/", accountHandler)
+	http.HandleFunc("/stocks/", marketServer.handleGetStock)
+	http.HandleFunc("/user/", server.accountHandler)
 	fmt.Println(marketServer.data)
 	// Set up a ticker to run every 60 seconds
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
 	// Run the logging in a separate goroutine
