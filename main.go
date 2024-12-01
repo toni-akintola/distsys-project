@@ -13,7 +13,8 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
-	marketServer := initializeMarket()
+	marketServer := &MarketServer{}
+	marketServer.initializeMarket()
 	fmt.Println("Server is running.")
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/stocks", marketServer.handleGetStock)
