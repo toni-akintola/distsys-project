@@ -9,7 +9,7 @@ import (
 )
 
 type MarketServer struct {
-	data map[string]Stock
+	data map[string]*Stock
 }
 
 type Stock struct {
@@ -78,7 +78,7 @@ func (s *MarketServer) readLog() {
 			volatility:   volatility,
 		}
 
-		result[ticker] = stock
+		s.data[ticker] = &stock
 		fmt.Println("Parsed stock:", stock)
 	}
 }
@@ -98,10 +98,16 @@ func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s MarketServer) getStock(ticker string) Stock {
-	return s.data[ticker]
+	return *s.data[ticker]
 }
 
+func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float64) {
+	if stock, ok := s.data[ticker]; ok {
+		stock.volume = volume
+		stock.currentPrice = newPrice
+	}
 
+}
 
 func (s *MarketServer) initializeMarket() {
 	s.readLog();
