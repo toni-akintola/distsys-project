@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 )
 
 type MarketServer struct {
@@ -36,8 +38,6 @@ func (s *MarketServer) readLog() {
 		fmt.Println("Error parsing JSON:", err)
 		return
 	}
-	// Create and initialize the map
-	result := make(map[string]Stock) 
 
 	for _, rawStock := range rawData["stocks"] {
 
@@ -62,7 +62,7 @@ func (s *MarketServer) readLog() {
 		}
 
 		if vola, ok := rawStock["volatility"].(float64); ok {
-			volume = vola
+			volatility = vola
 		}
 
 
@@ -106,10 +106,27 @@ func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float
 		stock.volume = volume
 		stock.currentPrice = newPrice
 	}
+}
 
+
+func (s *MarketServer) writeLog() {
+	// Open or create the log file
+	file, err := os.OpenFile("market_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer file.Close()
+
+	logger := log.New(file, "LOG: ", log.Ldate|log.Ltime)
+
+	for ticker, stock := range s.data {
+		logger.Printf("Ticker: %s, Current Price: %.2f\n", ticker, stock.currentPrice)
+	}
+
+	fmt.Println("Log written successfully.")
 }
 
 func (s *MarketServer) initializeMarket() {
+	s.data = make(map[string]*Stock, 0);
 	s.readLog();
-
-}
+} 
