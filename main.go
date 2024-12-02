@@ -17,7 +17,6 @@ func main() {
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
 	server, _ := newAccountServer()
-	fmt.Println("Server is running.")
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/stocks/", marketServer.handleGetStock)
 	http.HandleFunc("/user/", server.accountHandler)
@@ -33,9 +32,14 @@ func main() {
 		}
 	}()
 	// I'm working on the student machines and this is in the range of ports that work LOL
-	err := http.ListenAndServe(":9444", nil)
-	if err != nil {
-		panic(err)
+	marketErr := http.ListenAndServe(":9444", nil)
+	executorErr := http.ListenAndServe(":9445", nil)
+	if marketErr != nil {
+		panic(marketErr)
+	} else if executorErr != nil {
+		panic(executorErr)
 	}
+	fmt.Println("Market server is running.")
+	fmt.Println("Executor server is running.")
 		
 }

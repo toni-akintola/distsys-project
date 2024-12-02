@@ -8,9 +8,15 @@ import (
 	"strings"
 )
 
+type Position struct {
+	quantity float64
+	price float64
+	ticker string
+}
 type Account struct {
 	Username string  `json:"username"`
 	Balance  float64 `json:"balance"`
+	Positions []Position
 }
 
 type AccountServer struct {
@@ -50,13 +56,29 @@ func readAccounts(filename string) ([]Account, error) {
 	return accounts, nil
 }
 
-// GetAccount retrieves an account by username
+// getAccount retrieves an account by username
 func (s *AccountServer) getAccount(username string) (*Account, bool) {
 	account, exists := s.data[strings.ToLower(username)]
 	if !exists {
 		return nil, false
 	}
 	return &account, true
+}
+
+// updateAccount updates an account balance and position information for a given account
+func (s *AccountServer) updateAccount(username string, ticker string, quantity float64, price float64) bool {
+	account, exists := s.data[strings.ToLower(username)]
+	if !exists {
+		return false
+	}
+	account.Balance -= price;
+	position := Position{price: price, ticker: ticker, quantity: quantity}
+	// If the positions list doesn't exist for an account, create it.
+	if account.Positions == nil {
+		account.Positions = make([]Position, 0)
+	}
+	account.Positions = append(account.Positions, position)
+	return true;
 }
 
 // AccountHandler handles HTTP requests for account information
