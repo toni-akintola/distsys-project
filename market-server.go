@@ -91,7 +91,12 @@ func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(ticker)
 
-	stock := s.getStock(ticker)
+	stock, err := s.getStock(ticker)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stock); err != nil {
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
@@ -99,21 +104,31 @@ func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *MarketServer) handleGetAllStocks(w http.ResponseWriter, r *http.Request) {
-	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
-	if ticker == "" {
-		http.Error(w, "please enter username", http.StatusBadRequest)
+	// ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
+	// if ticker == "" {
+		// http.Error(w, "please enter username", http.StatusBadRequest)
+		// return
+	// }
+
+	// stock := s.getStock(ticker)
+
+	if len(s.data) == 0 {
+		http.Error(w, "no stocks", http.StatusNotFound)
 		return
 	}
-
-	stock := s.getStock(ticker)
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(stock); err != nil {
+	if err := json.NewEncoder(w).Encode(s.data); err != nil {
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
 	}
 }
 
-func (s MarketServer) getStock(ticker string) Stock {
-	return *s.data[ticker]
+func (s MarketServer) getStock(ticker string) (*Stock, error) {
+	stock, exists := s.data[ticker]
+	// so that we do not dereference nonexistent pointer
+	if !exists {
+		return nil, fmt.Errorf("ticker not found")
+	}
+	return stock, nil
 }
 
 
