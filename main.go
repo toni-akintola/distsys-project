@@ -23,7 +23,8 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 func main() {
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
-	executorServer, _ := newExecutorServer()
+	marketHost := "http://localhost:9444"
+	executorServer, _ := newExecutorServer(marketHost)
 	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
 	
 	http.HandleFunc("/", getRoot)
@@ -51,7 +52,7 @@ func main() {
 	}()
 
 	go func() {
-		fmt.Println("Starting market server on port 9445.")
+		fmt.Println("Starting executor server on port 9445.")
 		if err := server2.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Executor server failed: %v\n", err)
 		}

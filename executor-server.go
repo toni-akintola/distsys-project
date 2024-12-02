@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type Position struct {
@@ -21,10 +23,12 @@ type Account struct {
 
 type ExecutorServer struct {
 	data map[string]Account // Store accounts in a map for efficient lookups
+	marketHost string
+	httpClient http.Client
 }
 
 // NewExecutorServer initializes the ExecutorServer and loads accounts from a file
-func newExecutorServer() (*ExecutorServer, error) {
+func newExecutorServer(marketHost string) (*ExecutorServer, error) {
 	filename := "accounts.json"
 	accounts, err := readAccounts(filename)
 	if err != nil {
@@ -35,8 +39,11 @@ func newExecutorServer() (*ExecutorServer, error) {
 	for _, account := range accounts {
 		data[strings.ToLower(account.Username)] = account
 	}
+	executorClient := http.Client{
+		Timeout: time.Second * 3, // Have our request timeout after 3 seconds if we don't receieve a response.
+	}
 
-	return &ExecutorServer{data: data}, nil
+	return &ExecutorServer{data: data, marketHost: marketHost, httpClient: executorClient}, nil
 }
 
 // readAccounts reads accounts from a JSON file
@@ -102,4 +109,28 @@ func (s *ExecutorServer) accountHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (s *ExecutorServer) getStockInfo(ticker string) {
+	var payload = make(map[string]string, 0)
+	payload["ticker"] = ticker
+
+	jsonBody, err := json.Marshal(payload)
+
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return
+	}
+	request, requestError := http.NewRequest(http.MethodPost, s.marketHost + "/stocks", bytes.NewBuffer(jsonBody))
+
+	request.Header.Set("Content-Type", "application/json")
+	response, responseError := s.httpClient.Do(request)
+
+	if responseError != nil {
+		fmt.Println("Error sending request:", responseError)
+		return
+	}
+	defer response.Body.Close()
+	fmt.Println("Response status:", response.Status)
+	fmt.Println("Response body:", response.Body)
 }

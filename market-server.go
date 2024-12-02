@@ -84,6 +84,20 @@ func (s *MarketServer) readLog() {
 }
 
 func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
+	var result map[string]string
+	body, err := io.ReadAll(r.Body)
+	json.Unmarshal(body, &result)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	stock := s.getStock(result["ticker"])
+	
+
+}
+
+func (s *MarketServer) handleGetAllStocks(w http.ResponseWriter, r *http.Request) {
 	var result map[string]Stock
 	body, err := io.ReadAll(r.Body)
 	json.Unmarshal(body, &result)
@@ -100,6 +114,7 @@ func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 func (s MarketServer) getStock(ticker string) Stock {
 	return *s.data[ticker]
 }
+
 
 func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float64) {
 	if stock, ok := s.data[ticker]; ok {
@@ -129,4 +144,5 @@ func (s *MarketServer) writeLog() {
 func (s *MarketServer) initializeMarket() {
 	s.data = make(map[string]*Stock, 0);
 	s.readLog();
-} 
+}
+ 
