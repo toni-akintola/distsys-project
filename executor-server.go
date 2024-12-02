@@ -111,18 +111,17 @@ func (s *ExecutorServer) accountHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (s *ExecutorServer) handleGetStockInfo(w http.ResponseWriter, r *http.Request) {
+func (s *ExecutorServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 
 	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
 	if ticker == "" {
 		http.Error(w, "please enter username", http.StatusBadRequest)
 		return
 	}
-
 	
 	response, responseError := http.Get(s.marketHost + "/single-stock/" + ticker)
 
-
+	var result map[string]interface{}
 	if responseError != nil {
 		fmt.Println("Error sending request:", responseError)
 		return
@@ -133,7 +132,28 @@ func (s *ExecutorServer) handleGetStockInfo(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		fmt.Println("Failed to read response body.")
 	}
-	fmt.Println("Response body:", string(body))
+	json.Unmarshal([]byte(body), &result)
+	fmt.Println(result)
+
+}
+
+func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Request) {
+	response, responseError := http.Get(s.marketHost + "/all-stocks/")
+
+	var result map[string]interface{}
+	if responseError != nil {
+		fmt.Println("Error sending request:", responseError)
+		return
+	}
+
+	defer response.Body.Close()
+	fmt.Println("Response status:", response.Status)
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Failed to read response body.")
+	}
+	json.Unmarshal([]byte(body), &result)
+	fmt.Println(result)
 
 }
 
