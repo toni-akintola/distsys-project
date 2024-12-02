@@ -28,8 +28,10 @@ func main() {
 	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
 	
 	http.HandleFunc("/", getRoot)
-	mux1.HandleFunc("/stocks/", marketServer.handleGetStock)
+	mux1.HandleFunc("/all-stocks/", marketServer.handleGetStock)
+	mux1.HandleFunc("/single-stock/", marketServer.handleGetStock)
 	mux2.HandleFunc("/user/", executorServer.accountHandler)
+	mux2.HandleFunc("/single-stock/", executorServer.handleGetStockInfo)
 	// Create the first server
 	server1 := &http.Server{
 		Addr:    ":9444",

@@ -94,7 +94,7 @@ func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 
 	stock := s.getStock(result["ticker"])
 	
-
+	w.Write(createByteSlice(stock))
 }
 
 func (s *MarketServer) handleGetAllStocks(w http.ResponseWriter, r *http.Request) {

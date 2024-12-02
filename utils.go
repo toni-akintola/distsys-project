@@ -3,7 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 )
 
 func createByteSlice(data any) []byte {
@@ -11,7 +14,7 @@ func createByteSlice(data any) []byte {
 
 	enc := gob.NewEncoder(&buf)
 
-	err := enc.Encode(p)
+	err := enc.Encode(data)
 
 	if err != nil {
 		fmt.Println("gob.Encode failed:", err)
@@ -19,4 +22,20 @@ func createByteSlice(data any) []byte {
 
 	return buf.Bytes()
 
+}
+
+// Generic function to unmarshal JSON body into a given type
+func unmarshalJSONBody[T any](r *http.Request) (T, error) {
+	var result T
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return result, fmt.Errorf("failed to read body: %w", err)
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &result); err != nil {
+		return result, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return result, nil
 }

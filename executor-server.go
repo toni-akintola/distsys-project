@@ -111,17 +111,18 @@ func (s *ExecutorServer) accountHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (s *ExecutorServer) getStockInfo(ticker string) {
-	var payload = make(map[string]string, 0)
-	payload["ticker"] = ticker
+func (s *ExecutorServer) handleGetStockInfo(w http.ResponseWriter, r *http.Request) {
 
-	jsonBody, err := json.Marshal(payload)
-
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
+	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
+	if ticker == "" {
+		http.Error(w, "please enter username", http.StatusBadRequest)
 		return
 	}
-	request, requestError := http.NewRequest(http.MethodPost, s.marketHost + "/stocks", bytes.NewBuffer(jsonBody))
+
+	
+	requestBody, _ := json.Marshal(ticker)
+	fmt.Println(s.marketHost + "/stocks/")
+	request, _ := http.NewRequest(http.MethodPost, s.marketHost + "/single-stock/", bytes.NewBuffer(requestBody))
 
 	request.Header.Set("Content-Type", "application/json")
 	response, responseError := s.httpClient.Do(request)
@@ -133,4 +134,6 @@ func (s *ExecutorServer) getStockInfo(ticker string) {
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
 	fmt.Println("Response body:", response.Body)
+
 }
+
