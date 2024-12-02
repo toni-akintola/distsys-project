@@ -111,7 +111,7 @@ func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float
 
 func (s *MarketServer) writeLog() {
 	// Open or create the log file
-	file, err := os.OpenFile("market_log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile("market_log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}

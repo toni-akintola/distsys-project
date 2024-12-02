@@ -12,16 +12,55 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "This is my website!\n")
 }
 
+// func runMarketServer() {
+
+// }
+
+// func runExecutorServer() {
+
+// }
 
 func main() {
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
-	server, _ := newAccountServer()
+	executorServer, _ := newExecutorServer()
+	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
+	
 	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/stocks/", marketServer.handleGetStock)
-	http.HandleFunc("/user/", server.accountHandler)
-	fmt.Println(marketServer.data)
-	// Set up a ticker to run every 60 seconds
+	mux1.HandleFunc("/stocks/", marketServer.handleGetStock)
+	mux2.HandleFunc("/user/", executorServer.accountHandler)
+	// Create the first server
+	server1 := &http.Server{
+		Addr:    ":9444",
+		Handler: mux1,
+	}
+
+	// Create the second server
+	server2 := &http.Server{
+		Addr:    ":9445",
+		Handler: mux2,
+	}
+
+	// Start the servers in separate goroutines
+	go func() {
+		// I'm working on the student machines and this is in the range of ports that work LOL
+		fmt.Println("Starting market server on port 9444.")
+		if err := server1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("Market server failed: %v\n", err)
+		}
+	}()
+
+	go func() {
+		fmt.Println("Starting market server on port 9445.")
+		if err := server2.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("Executor server failed: %v\n", err)
+		}
+	}()
+
+	// Block the main goroutine
+	select {}
+
+	// Set up a timer so we can write to the log every 60 seconds
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
@@ -31,15 +70,7 @@ func main() {
 			marketServer.writeLog()
 		}
 	}()
-	// I'm working on the student machines and this is in the range of ports that work LOL
-	marketErr := http.ListenAndServe(":9444", nil)
-	executorErr := http.ListenAndServe(":9445", nil)
-	if marketErr != nil {
-		panic(marketErr)
-	} else if executorErr != nil {
-		panic(executorErr)
-	}
-	fmt.Println("Market server is running.")
-	fmt.Println("Executor server is running.")
+	
+
 		
 }

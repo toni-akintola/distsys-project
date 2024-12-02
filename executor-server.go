@@ -16,15 +16,15 @@ type Position struct {
 type Account struct {
 	Username string  `json:"username"`
 	Balance  float64 `json:"balance"`
-	Positions []Position
+	positions []Position
 }
 
-type AccountServer struct {
+type ExecutorServer struct {
 	data map[string]Account // Store accounts in a map for efficient lookups
 }
 
-// NewAccountServer initializes the AccountServer and loads accounts from a file
-func newAccountServer() (*AccountServer, error) {
+// NewExecutorServer initializes the ExecutorServer and loads accounts from a file
+func newExecutorServer() (*ExecutorServer, error) {
 	filename := "accounts.json"
 	accounts, err := readAccounts(filename)
 	if err != nil {
@@ -36,7 +36,7 @@ func newAccountServer() (*AccountServer, error) {
 		data[strings.ToLower(account.Username)] = account
 	}
 
-	return &AccountServer{data: data}, nil
+	return &ExecutorServer{data: data}, nil
 }
 
 // readAccounts reads accounts from a JSON file
@@ -57,7 +57,7 @@ func readAccounts(filename string) ([]Account, error) {
 }
 
 // getAccount retrieves an account by username
-func (s *AccountServer) getAccount(username string) (*Account, bool) {
+func (s *ExecutorServer) getAccount(username string) (*Account, bool) {
 	account, exists := s.data[strings.ToLower(username)]
 	if !exists {
 		return nil, false
@@ -66,7 +66,7 @@ func (s *AccountServer) getAccount(username string) (*Account, bool) {
 }
 
 // updateAccount updates an account balance and position information for a given account
-func (s *AccountServer) updateAccount(username string, ticker string, quantity float64, price float64) bool {
+func (s *ExecutorServer) updateAccount(username string, ticker string, quantity float64, price float64) bool {
 	account, exists := s.data[strings.ToLower(username)]
 	if !exists {
 		return false
@@ -74,15 +74,15 @@ func (s *AccountServer) updateAccount(username string, ticker string, quantity f
 	account.Balance -= price;
 	position := Position{price: price, ticker: ticker, quantity: quantity}
 	// If the positions list doesn't exist for an account, create it.
-	if account.Positions == nil {
-		account.Positions = make([]Position, 0)
+	if account.positions == nil {
+		account.positions = make([]Position, 0)
 	}
-	account.Positions = append(account.Positions, position)
+	account.positions = append(account.positions, position)
 	return true;
 }
 
 // AccountHandler handles HTTP requests for account information
-func (s *AccountServer) accountHandler(w http.ResponseWriter, r *http.Request) {
+func (s *ExecutorServer) accountHandler(w http.ResponseWriter, r *http.Request) {
 	username := strings.TrimPrefix(r.URL.Path, "/user/")
 	if username == "" {
 		http.Error(w, "please enter username", http.StatusBadRequest)
