@@ -133,7 +133,7 @@ func (s *ExecutorServer) handleGetStockInfo(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		fmt.Println("Failed to read response body.")
 	}
-	fmt.Println("Response body:", body)
+	fmt.Println("Response body:", string(body))
 
 }
 
