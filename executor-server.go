@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -120,12 +120,8 @@ func (s *ExecutorServer) handleGetStockInfo(w http.ResponseWriter, r *http.Reque
 	}
 
 	
-	requestBody, _ := json.Marshal(ticker)
-	fmt.Println(s.marketHost + "/stocks/")
-	request, _ := http.NewRequest(http.MethodPost, s.marketHost + "/single-stock/", bytes.NewBuffer(requestBody))
+	response, responseError := http.Get(s.marketHost + "/single-stock/" + ticker)
 
-	request.Header.Set("Content-Type", "application/json")
-	response, responseError := s.httpClient.Do(request)
 
 	if responseError != nil {
 		fmt.Println("Error sending request:", responseError)
@@ -133,7 +129,11 @@ func (s *ExecutorServer) handleGetStockInfo(w http.ResponseWriter, r *http.Reque
 	}
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
-	fmt.Println("Response body:", response.Body)
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Failed to read response body.")
+	}
+	fmt.Println("Response body:", body)
 
 }
 

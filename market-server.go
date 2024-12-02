@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type MarketServer struct {
@@ -15,14 +15,14 @@ type MarketServer struct {
 }
 
 type Stock struct {
-	ticker string
-	companyName string
-	assetType string
-	currentPrice float64
-	currency string
-	volume float64
-	lastUpdated string
-	volatility float64
+	Ticker string
+	CompanyName string
+	AssetType string
+	CurrentPrice float64
+	Currency string
+	Volume float64
+	LastUpdated string
+	Volatility float64
 }
 
 func (s *MarketServer) readLog() {
@@ -67,48 +67,49 @@ func (s *MarketServer) readLog() {
 
 
 		// Create Stock Struct
-		stock := Stock{
-			ticker:       ticker,
-			companyName:  companyName,
-			assetType:    assetType,
-			currentPrice: currentPrice,
-			currency:     currency,
-			lastUpdated:  lastUpdated,
-			volume:       volume,
-			volatility:   volatility,
+		stock := &Stock{
+			Ticker:       ticker,
+			CompanyName:  companyName,
+			AssetType:    assetType,
+			CurrentPrice: currentPrice,
+			Currency:     currency,
+			LastUpdated:  lastUpdated,
+			Volume:       volume,
+			Volatility:   volatility,
 		}
 
-		s.data[ticker] = &stock
+		s.data[ticker] = stock
 		fmt.Println("Parsed stock:", stock)
 	}
 }
 
 func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
-	var result map[string]string
-	body, err := io.ReadAll(r.Body)
-	json.Unmarshal(body, &result)
-
-	if err != nil {
-		fmt.Println(err)
+	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
+	if ticker == "" {
+		http.Error(w, "please enter username", http.StatusBadRequest)
+		return
 	}
+	fmt.Println(ticker)
 
-	stock := s.getStock(result["ticker"])
-	
-	w.Write(createByteSlice(stock))
+	stock := s.getStock(ticker)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(stock); err != nil {
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+	}
 }
 
 func (s *MarketServer) handleGetAllStocks(w http.ResponseWriter, r *http.Request) {
-	var result map[string]Stock
-	body, err := io.ReadAll(r.Body)
-	json.Unmarshal(body, &result)
-
-	if err != nil {
-		fmt.Println(err)
+	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
+	if ticker == "" {
+		http.Error(w, "please enter username", http.StatusBadRequest)
+		return
 	}
 
-	var tickerStock Stock = result["ticker"]
-
-	fmt.Println(result, s.getStock(tickerStock.ticker))
+	stock := s.getStock(ticker)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(stock); err != nil {
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+	}
 }
 
 func (s MarketServer) getStock(ticker string) Stock {
@@ -118,8 +119,8 @@ func (s MarketServer) getStock(ticker string) Stock {
 
 func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float64) {
 	if stock, ok := s.data[ticker]; ok {
-		stock.volume = volume
-		stock.currentPrice = newPrice
+		stock.Volume = volume
+		stock.CurrentPrice = newPrice
 	}
 }
 
@@ -135,7 +136,7 @@ func (s *MarketServer) writeLog() {
 	logger := log.New(file, "LOG: ", log.Ldate|log.Ltime)
 
 	for ticker, stock := range s.data {
-		logger.Printf("Ticker: %s, Current Price: %.2f\n", ticker, stock.currentPrice)
+		logger.Printf("Ticker: %s, Current Price: %.2f\n", ticker, stock.CurrentPrice)
 	}
 
 	fmt.Println("Log written successfully.")
