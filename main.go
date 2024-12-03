@@ -33,6 +33,8 @@ func main() {
 	mux2.HandleFunc("/user/", executorServer.accountHandler)
 	mux2.HandleFunc("/single-stock/", executorServer.handleGetStock)
 	mux2.HandleFunc("/all-stocks/", executorServer.handleGetAllStocks)
+	mux2.HandleFunc("/buy/", executorServer.handleBuyOrder)
+	mux2.HandleFunc("/sell/", executorServer.handleSellOrder)
 	// Create the first server
 	server1 := &http.Server{
 		Addr:    ":9444",

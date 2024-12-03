@@ -11,9 +11,9 @@ import (
 )
 
 type Position struct {
-	quantity float64
-	price float64
-	ticker string
+	Quantity float64
+	Price float64
+	Ticker string
 }
 type Account struct {
 	Username string  `json:"username"`
@@ -79,7 +79,7 @@ func (s *ExecutorServer) updateAccount(username string, ticker string, quantity 
 		return false
 	}
 	account.Balance -= price;
-	position := Position{price: price, ticker: ticker, quantity: quantity}
+	position := Position{Price: price, Ticker: ticker, Quantity: quantity}
 	// If the positions list doesn't exist for an account, create it.
 	if account.positions == nil {
 		account.positions = make([]Position, 0)
@@ -157,5 +157,24 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (s *ExecutorServer) handleBuyOrder(w http.ResponseWriter, r *http.Request)
-func (s *ExecutorServer) handleSellOrder(w http.ResponseWriter, r *http.Request)
+func (s *ExecutorServer) handleBuyOrder(w http.ResponseWriter, r *http.Request) {
+	requestBody, err := unmarshalJSONBody[map[string]interface{}](r)
+
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON body:", err)
+		return
+	}
+
+	fmt.Println(requestBody)
+}
+
+func (s *ExecutorServer) handleSellOrder(w http.ResponseWriter, r *http.Request) {
+	requestBody, err := unmarshalJSONBody[map[string]interface{}](r)
+
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON body:", err)
+		return
+	}
+	
+	fmt.Println(requestBody)
+}
