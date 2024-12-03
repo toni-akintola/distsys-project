@@ -157,3 +157,5 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 
 }
 
+func (s *ExecutorServer) handleBuyOrder(w http.ResponseWriter, r *http.Request)
+func (s *ExecutorServer) handleSellOrder(w http.ResponseWriter, r *http.Request)
