@@ -31,7 +31,8 @@ func main() {
 	mux1.HandleFunc("/all-stocks/", marketServer.handleGetAllStocks)
 	mux1.HandleFunc("/single-stock/", marketServer.handleGetStock)
 	mux2.HandleFunc("/user/", executorServer.accountHandler)
-	mux2.HandleFunc("/single-stock/", executorServer.handleGetStockInfo)
+	mux2.HandleFunc("/single-stock/", executorServer.handleGetStock)
+	mux2.HandleFunc("/all-stocks/", executorServer.handleGetAllStocks)
 	// Create the first server
 	server1 := &http.Server{
 		Addr:    ":9444",
@@ -60,9 +61,6 @@ func main() {
 		}
 	}()
 
-	// Block the main goroutine
-	select {}
-
 	// Set up a timer so we can write to the log every 60 seconds
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
@@ -73,6 +71,10 @@ func main() {
 			marketServer.writeLog()
 		}
 	}()
+
+	// Block the main goroutine
+	select {}
+
 	
 
 		
