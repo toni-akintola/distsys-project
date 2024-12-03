@@ -63,6 +63,56 @@ func readAccounts(filename string) ([]Account, error) {
 	return accounts, nil
 }
 
+// saveAccounts writes account information to file after we update
+func (s *ExecutorServer) saveAccounts () error {
+	
+	file, err := os.OpenFile("accounts.json", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("unable to open accounts.json for writing")
+	}
+	defer file.Close()
+	
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(s.data); err != nil {
+		return fmt.Errorf("unable to encode accounts")
+	}
+	return nil
+}
+
+// handleCreateAccount creates a new account
+func (s *ExecutorServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "please POST", http.StatusMethodNotAllowed)
+		return
+	}
+	// parse JSON
+	var newAccount Account
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&newAccount); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	// we should make sure that this username does not already exist
+	if _, exists := s.data[strings.ToLower(newAccount.Username)]; exists {
+		http.Error(w, "username already exists", http.StatusConflict)
+		return
+	}
+	// give account $10k
+	newAccount.Balance = 10000
+	// store in-memory
+	s.data[strings.ToLower(newAccount.Username)] = newAccount
+	// store on-disk
+	if err := s.saveAccounts(); err != nil {
+		http.Error(w, fmt.Sprintf("unable to save account to disk"), http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(newAccount); err != nil {
+		http.Error(w, "unable to encode JSON response", http.StatusInternalServerError)
+	}
+}
+
 // getAccount retrieves an account by username
 func (s *ExecutorServer) getAccount(username string) (*Account, bool) {
 	account, exists := s.data[strings.ToLower(username)]
@@ -157,5 +207,5 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (s *ExecutorServer) handleBuyOrder(w http.ResponseWriter, r *http.Request)
-func (s *ExecutorServer) handleSellOrder(w http.ResponseWriter, r *http.Request)
+// func (s *ExecutorServer) handleBuyOrder(w http.ResponseWriter, r *http.Request)
+// func (s *ExecutorServer) handleSellOrder(w http.ResponseWriter, r *http.Request)
