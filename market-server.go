@@ -6,11 +6,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strings"
 )
-
+var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNG", "GOOGL"}
 type MarketServer struct {
 	data map[string]*Stock
 }
@@ -20,10 +21,11 @@ type Stock struct {
 	CompanyName string `json:"companyName"`
 	AssetType string `json:"assetType"`
 	CurrentPrice float64 `json:"currentPrice"`
-	Currency string `json:"Currency"`
-	Volume float64 `json:"Volume"`
+	Currency string `json:"currency"`
+	Volume float64 `json:"volume"`
 	LastUpdated string `json:"lastUpdated"`
-	Volatility float64 `json:"Volatility"`
+	Volatility float64 `json:"volatility"`
+	SignTendency float64 `json:"signTendency"`
 }
 
 func (s *MarketServer) readLog() {
@@ -49,10 +51,12 @@ func (s *MarketServer) readLog() {
 		currency, _ := rawStock["currency"].(string)
 		lastUpdated, _ := rawStock["lastUpdated"].(string)
 
+
 		// Parse numeric fields
 		currentPrice := 0.0
 		volume := 0.0
 		volatility := 0.0
+		signTendency := 0.0
 
 		if cp, ok := rawStock["currentPrice"].(float64); ok {
 			currentPrice = cp
@@ -66,6 +70,12 @@ func (s *MarketServer) readLog() {
 			volatility = vola
 		}
 
+		if st, ok := rawStock["signTendency"].(float64); ok {
+			signTendency = st
+		}
+
+
+
 
 		// Create Stock Struct
 		stock := &Stock{
@@ -77,6 +87,7 @@ func (s *MarketServer) readLog() {
 			LastUpdated:  lastUpdated,
 			Volume:       volume,
 			Volatility:   volatility,
+			SignTendency: signTendency,
 		}
 
 		s.data[ticker] = stock
@@ -140,11 +151,27 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	
 }
 
+func (s *MarketServer) randomUpdate() {
+	x := rand.IntN(len(TICKERS))
+	ticker := TICKERS[x]
+	stock, _ := s.getStock(ticker)
+	signIndicator := rand.Float64()
+	volatility := 0.0
+	if signIndicator <= stock.SignTendency {
+		volatility = stock.Volatility
+	} else {
+		volatility = -1 * stock.Volatility
+	}
+
+	dPrice := stock.CurrentPrice * volatility 
+	fmt.Println("Ticker: ", ticker, "Old Price: ", stock.CurrentPrice, "New Price: ", stock.CurrentPrice + dPrice)
+	// s.updateStock(ticker, stock.CurrentPrice + dPrice)
+	
+}
 
 
-func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float64) {
+func (s *MarketServer) updateStock(ticker string, newPrice float64) {
 	if stock, ok := s.data[ticker]; ok {
-		stock.Volume = volume
 		stock.CurrentPrice = newPrice
 	}
 }

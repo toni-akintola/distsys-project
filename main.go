@@ -63,9 +63,10 @@ func main() {
 			fmt.Printf("Executor server failed: %v\n", err)
 		}
 	}()
+	
 
 	// Set up a timer so we can write to the log every 60 seconds
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	// Run the logging in a separate goroutine
