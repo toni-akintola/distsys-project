@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -122,10 +123,16 @@ func (s MarketServer) getStock(ticker string) (*Stock, error) {
 
 func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 
-	order, err := unmarshalJSONBody[Order](r)
 
+	// Unmarshal the JSON body into a Go struct
+	// Read the body of the request
+	body, err := io.ReadAll(r.Body)
+	
+	var order Order
+	err = json.Unmarshal(body, &order)
 	if err != nil {
-		fmt.Println("Error unmarshalling JSON body:", err)
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		fmt.Println("Error unmarshaling JSON:", err)
 		return
 	}
 

@@ -214,26 +214,24 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
-	requestBody, err := unmarshalJSONBody[Order](r)
+	var p Order
+	err := json.NewDecoder(r.Body).Decode(&p)
+	fmt.Println(p)
+	// requestBody, err := unmarshalJSONBody[Order](r)
+	
 
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON body:", err)
 		return
 	}
-	jsonBody := createRequestBody(requestBody)
+	jsonBody := createRequestBody(p)
 	response, responseError := http.Post(s.marketHost + "/order/", "application/json", jsonBody)
 
-	var result map[string]interface{}
+	
 	if responseError != nil {
 		fmt.Println("Error sending request:", responseError)
 		return
 	}
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("Failed to read response body.")
-	}
-	json.Unmarshal([]byte(body), &result)
-	fmt.Println(result)
 }
