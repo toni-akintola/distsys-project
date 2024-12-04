@@ -28,6 +28,7 @@ func createByteSlice(data any) []byte {
 func unmarshalJSONBody[T any](r *http.Request) (T, error) {
 	var result T
 	body, err := io.ReadAll(r.Body)
+
 	if err != nil {
 		return result, fmt.Errorf("failed to read body: %w", err)
 	}
@@ -38,4 +39,13 @@ func unmarshalJSONBody[T any](r *http.Request) (T, error) {
 	}
 
 	return result, nil
+}
+
+func createRequestBody(data any) *bytes.Buffer {
+	jsonBody, err := json.Marshal(createByteSlice(data))
+	if err != nil {
+		fmt.Println(fmt.Println("failed to read body: %w", err))
+	}
+
+	return bytes.NewBuffer(jsonBody)
 }

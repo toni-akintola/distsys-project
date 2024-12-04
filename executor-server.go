@@ -9,17 +9,23 @@ import (
 	"strings"
 	"time"
 )
-
-type Position struct {
-	quantity float64
-	price float64
-	ticker string
-}
 type Account struct {
 	Username string  `json:"username"`
 	Balance  float64 `json:"balance"`
 	positions []Position
 }
+
+type Order struct {
+	Quantity float64 `json:"quantity"`
+	Ticker string `json:"ticker"`
+}
+
+type Position struct {
+	Order Order `json:"order"`
+	Price float64 `json:"price"`
+	Username string `json:"username"`
+}
+
 
 type ExecutorServer struct {
 	data map[string]Account // Store accounts in a map for efficient lookups
@@ -129,7 +135,7 @@ func (s *ExecutorServer) updateAccount(username string, ticker string, quantity 
 		return false
 	}
 	account.Balance -= price;
-	position := Position{price: price, ticker: ticker, quantity: quantity}
+	position := Position{Order: Order{Ticker: ticker, Quantity: quantity}, Username: username}
 	// If the positions list doesn't exist for an account, create it.
 	if account.positions == nil {
 		account.positions = make([]Position, 0)
@@ -207,5 +213,27 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 
 }
 
-// func (s *ExecutorServer) handleBuyOrder(w http.ResponseWriter, r *http.Request)
-// func (s *ExecutorServer) handleSellOrder(w http.ResponseWriter, r *http.Request)
+func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
+	requestBody, err := unmarshalJSONBody[Order](r)
+
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON body:", err)
+		return
+	}
+	jsonBody := createRequestBody(requestBody)
+	response, responseError := http.Post(s.marketHost + "/order/", "application/json", jsonBody)
+
+	var result map[string]interface{}
+	if responseError != nil {
+		fmt.Println("Error sending request:", responseError)
+		return
+	}
+	defer response.Body.Close()
+	fmt.Println("Response status:", response.Status)
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Failed to read response body.")
+	}
+	json.Unmarshal([]byte(body), &result)
+	fmt.Println(result)
+}
