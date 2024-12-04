@@ -15,14 +15,14 @@ type MarketServer struct {
 }
 
 type Stock struct {
-	Ticker string
-	CompanyName string
-	AssetType string
-	CurrentPrice float64
-	Currency string
-	Volume float64
-	LastUpdated string
-	Volatility float64
+	Ticker string `json:"ticker"`
+	CompanyName string `json:"companyName"`
+	AssetType string `json:"assetType"`
+	CurrentPrice float64 `json:"currentPrice"`
+	Currency string `json:"Currency"`
+	Volume float64 `json:"Volume"`
+	LastUpdated string `json:"lastUpdated"`
+	Volatility float64 `json:"Volatility"`
 }
 
 func (s *MarketServer) readLog() {
@@ -119,6 +119,20 @@ func (s MarketServer) getStock(ticker string) (*Stock, error) {
 	}
 	return stock, nil
 }
+
+func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
+
+	order, err := unmarshalJSONBody[Order](r)
+
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON body:", err)
+		return
+	}
+
+	fmt.Println(order)
+	
+}
+
 
 
 func (s *MarketServer) updateStock(ticker string, volume float64, newPrice float64) {

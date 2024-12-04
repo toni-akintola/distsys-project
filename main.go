@@ -30,11 +30,11 @@ func main() {
 	http.HandleFunc("/", getRoot)
 	mux1.HandleFunc("/all-stocks/", marketServer.handleGetAllStocks)
 	mux1.HandleFunc("/single-stock/", marketServer.handleGetStock)
+	mux1.HandleFunc("/order/", marketServer.handleOrder)
 	mux2.HandleFunc("/user/", executorServer.accountHandler)
 	mux2.HandleFunc("/single-stock/", executorServer.handleGetStock)
 	mux2.HandleFunc("/all-stocks/", executorServer.handleGetAllStocks)
-	mux2.HandleFunc("/buy/", executorServer.handleBuyOrder)
-	mux2.HandleFunc("/sell/", executorServer.handleSellOrder)
+	mux2.HandleFunc("/order/", executorServer.handleOrder)
 	// Create the first server
 	server1 := &http.Server{
 		Addr:    ":9444",
