@@ -134,7 +134,6 @@ func (s MarketServer) getStock(ticker string) (*Stock, error) {
 
 func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 
-
 	// Unmarshal the JSON body into a Go struct
 	// Read the body of the request
 	body, err := io.ReadAll(r.Body)
@@ -146,8 +145,13 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error unmarshaling JSON:", err)
 		return
 	}
+	stock, _ := s.getStock(order.Ticker)
+	position := Position{Order: order, Price: stock.CurrentPrice}
 
-	fmt.Println(order)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(position); err != nil {
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+	}
 	
 }
 

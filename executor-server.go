@@ -18,12 +18,12 @@ type Account struct {
 type Order struct {
 	Quantity float64 `json:"quantity"`
 	Ticker string `json:"ticker"`
+	Username string `json:"username"`
 }
 
 type Position struct {
 	Order Order `json:"order"`
 	Price float64 `json:"price"`
-	Username string `json:"username"`
 }
 
 
@@ -135,7 +135,7 @@ func (s *ExecutorServer) updateAccount(username string, ticker string, quantity 
 		return false
 	}
 	account.Balance -= price;
-	position := Position{Order: Order{Ticker: ticker, Quantity: quantity}, Username: username}
+	position := Position{Order: Order{Ticker: ticker, Quantity: quantity, Username: username}, Price: price}
 	// If the positions list doesn't exist for an account, create it.
 	if account.positions == nil {
 		account.positions = make([]Position, 0)
@@ -214,9 +214,9 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
-	var p Order
-	err := json.NewDecoder(r.Body).Decode(&p)
-	fmt.Println(p)
+	var o Order
+	err := json.NewDecoder(r.Body).Decode(&o)
+	fmt.Println(o)
 	// requestBody, err := unmarshalJSONBody[Order](r)
 	
 
@@ -224,7 +224,7 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error unmarshalling JSON body:", err)
 		return
 	}
-	jsonBody := createRequestBody(p)
+	jsonBody := createRequestBody(o)
 	response, responseError := http.Post(s.marketHost + "/order/", "application/json", jsonBody)
 
 	
@@ -234,4 +234,8 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	}
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
+
+	var p Position
+	json.NewDecoder(response.Body).Decode(&p)
+	fmt.Println(p)
 }

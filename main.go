@@ -12,14 +12,6 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "This is my website!\n")
 }
 
-// func runMarketServer() {
-
-// }
-
-// func runExecutorServer() {
-
-// }
-
 func main() {
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
@@ -66,7 +58,7 @@ func main() {
 	
 
 	// Set up a timer so we can write to the log every 60 seconds
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 
 	// Run the logging in a separate goroutine
