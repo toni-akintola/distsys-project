@@ -55,23 +55,38 @@ func main() {
 			fmt.Printf("Executor server failed: %v\n", err)
 		}
 	}()
+	time.Sleep(2 * time.Second)
+	const numWorkers int = 5
 	
-
 	// Set up a timer so we can write to the log every 60 seconds
-	ticker := time.NewTicker(60 * time.Second)
-	defer ticker.Stop()
+	logTicker := time.NewTicker(60 * time.Second)
+	defer logTicker.Stop()
+
+	updateTicker := time.NewTicker(2 * time.Second)
+	defer updateTicker.Stop()
+
+	go func (){
+		for range updateTicker.C {
+			for i := 0; i < numWorkers; i++ {
+			fmt.Println("Random updating.")
+				marketServer.randomUpdate()
+			}
+		}
+			
+	}()
+	
 
 	// Run the logging in a separate goroutine
 	go func() {
-		for range ticker.C {
+		for range logTicker.C {
 			marketServer.writeLog()
 		}
 	}()
 
+	// Run the 
+
 	// Block the main goroutine
 	select {}
-
-	
 
 		
 }

@@ -48,7 +48,7 @@ def detect_changes ():
 
 def main ():
     while True:
-        detect_changes ()
+        detect_changes()
         time.sleep (1)
 
 if __name__ == "__main__":

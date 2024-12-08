@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 )
-var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNG", "GOOGL"}
+var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNJ", "GOOGL"}
 type MarketServer struct {
 	data map[string]*Stock
 }
@@ -158,7 +158,11 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 func (s *MarketServer) randomUpdate() {
 	x := rand.IntN(len(TICKERS))
 	ticker := TICKERS[x]
-	stock, _ := s.getStock(ticker)
+	stock, err := s.getStock(ticker) 
+	if err != nil {
+		fmt.Println(err, ticker)
+		return
+	}
 	signIndicator := rand.Float64()
 	volatility := 0.0
 	if signIndicator <= stock.SignTendency {
@@ -169,7 +173,7 @@ func (s *MarketServer) randomUpdate() {
 
 	dPrice := stock.CurrentPrice * volatility 
 	fmt.Println("Ticker: ", ticker, "Old Price: ", stock.CurrentPrice, "New Price: ", stock.CurrentPrice + dPrice)
-	// s.updateStock(ticker, stock.CurrentPrice + dPrice)
+	s.updateStock(ticker, stock.CurrentPrice + dPrice)
 	
 }
 

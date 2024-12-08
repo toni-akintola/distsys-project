@@ -128,20 +128,45 @@ func (s *ExecutorServer) getAccount(username string) (*Account, bool) {
 	return &account, true
 }
 
-// updateAccount updates an account balance and position information for a given account
+// updateAccount updates an account balance and position information for a given account.
+// updateAccount updates an account's balance and position information.
 func (s *ExecutorServer) updateAccount(username string, ticker string, quantity float64, price float64) bool {
-	account, exists := s.data[strings.ToLower(username)]
+	// Convert username to lowercase for consistent key lookup.
+	accountKey := strings.ToLower(username)
+	account, exists := s.data[accountKey]
 	if !exists {
-		return false
+		return false // Account doesn't exist.
 	}
-	account.Balance -= price;
-	position := Position{Order: Order{Ticker: ticker, Quantity: quantity, Username: username}, Price: price}
-	// If the positions list doesn't exist for an account, create it.
+
+	// Calculate the total cost of the transaction.
+	totalCost := quantity * price
+	if account.Balance < totalCost {
+		return false // Insufficient funds.
+	}
+
+	// Deduct the cost from the account balance.
+	account.Balance -= totalCost
+
+	// Ensure positions slice is initialized if nil.
 	if account.positions == nil {
 		account.positions = make([]Position, 0)
 	}
-	account.positions = append(account.positions, position)
-	return true;
+
+	// Create and append the new position.
+	newPosition := Position{
+		Order: Order{
+			Ticker:   ticker,
+			Quantity: quantity,
+			Username: username,
+		},
+		Price: price,
+	}
+	account.positions = append(account.positions, newPosition)
+
+	// Write the updated account back to the map.
+	s.data[accountKey] = account
+
+	return true
 }
 
 // AccountHandler handles HTTP requests for account information
@@ -232,10 +257,13 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error sending request:", responseError)
 		return
 	}
+
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
 
 	var p Position
 	json.NewDecoder(response.Body).Decode(&p)
-	fmt.Println(p)
+	s.updateAccount(p.Order.Username, p.Order.Ticker, p.Order.Quantity, p.Price)
+	fmt.Println(s.data[p.Order.Username])
+
 }
