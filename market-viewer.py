@@ -38,7 +38,7 @@ def detect_changes ():
     lines = read_log ()
     stocks = process (lines)
     
-    for ticker, price in stocks.items ():
+    for ticker, price in stocks.items():
         if ticker not in seen or seen [ticker] != price:
             changed = True
 
@@ -46,10 +46,10 @@ def detect_changes ():
         display (stocks)
         seen = stocks
 
-def main ():
+def main():
     while True:
         detect_changes()
-        time.sleep (1)
+        time.sleep(1)
 
 if __name__ == "__main__":
-    main ()
+    main()

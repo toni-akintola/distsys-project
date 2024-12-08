@@ -10,10 +10,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNJ", "GOOGL"}
 type MarketServer struct {
 	data map[string]*Stock
+	mu     sync.RWMutex       // Mutex for thread-safe access
 }
 
 type Stock struct {
