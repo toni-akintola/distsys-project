@@ -181,6 +181,8 @@ func (s *MarketServer) randomUpdate() {
 
 
 func (s *MarketServer) updateStock(ticker string, newPrice float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if stock, ok := s.data[ticker]; ok {
 		stock.CurrentPrice = newPrice
 	}

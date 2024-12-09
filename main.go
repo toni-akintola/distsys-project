@@ -55,6 +55,7 @@ func main() {
 			fmt.Printf("Executor server failed: %v\n", err)
 		}
 	}()
+
 	time.Sleep(2 * time.Second)
 	const numWorkers int = 5
 	
@@ -70,19 +71,12 @@ func main() {
 			for i := 0; i < numWorkers; i++ {
 			fmt.Println("Random updating.")
 				marketServer.randomUpdate()
+				marketServer.writeLog()
 			}
 		}
 			
 	}()
 	
-
-	// Run the logging in a separate goroutine
-	go func() {
-		for range logTicker.C {
-			marketServer.writeLog()
-		}
-	}()
-
 
 	// Block the main goroutine
 	select {}

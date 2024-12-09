@@ -19,7 +19,7 @@
       "exchange": "NASDAQ",
       "sector": "Technology",
       "industry": "Consumer Electronics",
-      "volatility": 0.0242075284427,
+      "volatility": 0.000242075284427,
       "signTendency": 0.3316,
       "lastUpdated": "2024-04-27T16:30:00Z"
     },
@@ -42,7 +42,7 @@
       "exchange": "NASDAQ",
       "sector": "Automotive",
       "industry": "Electric Vehicles",
-      "volatility": 0.0759239011680344,
+      "volatility": 0.000759239011680344,
       "signTendency": 0.3368,
       "lastUpdated": "2024-04-27T16:30:00Z"
     },
@@ -65,7 +65,7 @@
       "exchange": "NASDAQ",
       "sector": "Consumer Discretionary",
       "industry": "E-Commerce",
-      "volatility": 0.05177511120409216,
+      "volatility": 0.0005177511120409216,
       "signTendency": 0.1239,
       "lastUpdated": "2024-04-27T16:30:00Z"
     },
@@ -88,7 +88,7 @@
       "exchange": "NYSE",
       "sector": "Healthcare",
       "industry": "Pharmaceuticals",
-      "volatility": 0.023611651733453387,
+      "volatility": 0.00023611651733453387,
       "signTendency": 0.8797,
       "lastUpdated": "2024-04-27T16:30:00Z"
     },
@@ -111,7 +111,7 @@
       "exchange": "NASDAQ",
       "sector": "Communication Services",
       "industry": "Internet Content & Information",
-      "volatility": 0.05840179127379291,
+      "volatility": 0.0005840179127379291,
       "signTendency": 0.9635,
       "lastUpdated": "2024-04-27T16:30:00Z"
     }

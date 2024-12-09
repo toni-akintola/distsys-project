@@ -69,6 +69,24 @@ func readAccounts(filename string) ([]Account, error) {
 	return accounts, nil
 }
 
+// handleAuthenticate gives a client an auth token that they can use to make subsequent requests to the executor.
+func (s *ExecutorServer) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "use a POST request", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// parse JSON
+	var username string
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&username); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println(username)
+}
+
 // saveAccounts writes account information to file after we update
 func (s *ExecutorServer) saveAccounts () error {
 	
