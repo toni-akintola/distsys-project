@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -191,21 +190,23 @@ func (s *MarketServer) updateStock(ticker string, newPrice float64) {
 }
 
 
-func (s *MarketServer) writeLog() {
-	// Open or create the log file
-	file, err := os.OpenFile("market_log.txt", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+func (s *MarketServer) writeLog() error {
+	file, err := os.OpenFile("stocks.json", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Fatalf("Failed to open log file: %v", err)
+		return fmt.Errorf("unable to open stocks.json for writing")
 	}
 	defer file.Close()
-
-	logger := log.New(file, "LOG: ", log.Ldate|log.Ltime)
-
-	for ticker, stock := range s.data {
-		logger.Printf("Ticker: %s, Current Price: %.2f\n", ticker, stock.CurrentPrice)
+	
+	encoder := json.NewEncoder(file)
+	var stocks []Stock
+	for _, stock := range s.data {
+		stocks = append(stocks, *stock)
 	}
-
-	fmt.Println("Log written successfully.")
+	if err := encoder.Encode(stocks); err != nil {
+		fmt.Println("unable to encode stocks")
+		return fmt.Errorf("unable to encode stocks")
+	}
+	return nil
 }
 
 func (s *MarketServer) initializeMarket() {

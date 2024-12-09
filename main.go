@@ -72,6 +72,7 @@ func main() {
 			fmt.Println("Random updating.")
 				marketServer.randomUpdate()
 				marketServer.writeLog()
+				executorServer.saveAccounts()
 			}
 		}
 			

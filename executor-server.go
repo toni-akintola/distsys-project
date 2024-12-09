@@ -88,7 +88,7 @@ func (s *ExecutorServer) handleAuthenticate(w http.ResponseWriter, r *http.Reque
 }
 
 // saveAccounts writes account information to file after we update
-func (s *ExecutorServer) saveAccounts () error {
+func (s *ExecutorServer) saveAccounts() error {
 	
 	file, err := os.OpenFile("accounts.json", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -97,9 +97,15 @@ func (s *ExecutorServer) saveAccounts () error {
 	defer file.Close()
 	
 	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(s.data); err != nil {
+	var accounts []Account
+	for _, account := range s.data {
+		accounts = append(accounts, account)
+	}
+	if err := encoder.Encode(accounts); err != nil {
+		fmt.Println("unable to encode accounts")
 		return fmt.Errorf("unable to encode accounts")
 	}
+
 	return nil
 }
 
@@ -271,7 +277,7 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	var sellOrder bool
 	if o.Quantity == 0 {
 		http.Error(w, "Cannot place an order with quantity == 0", http.StatusInternalServerError)
-	} else if o.Quantity > 0 {
+	} else if o.Quantity < 0 {
 		sellOrder = true
 	} else {
 		sellOrder = false
@@ -301,6 +307,5 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
 		return
 	}
-	
 
 }
