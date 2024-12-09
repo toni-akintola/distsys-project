@@ -261,11 +261,20 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&o)
 	fmt.Println(o)
 	// requestBody, err := unmarshalJSONBody[Order](r)
-	
+	w.Header().Set("Content-Type", "application/json")
 
-	if err != nil {
+	if err != nil{
 		fmt.Println("Error unmarshalling JSON body:", err)
+		http.Error(w, "error unmarshalling JSON", http.StatusInternalServerError)
 		return
+	}
+	var sellOrder bool
+	if o.Quantity == 0 {
+		http.Error(w, "Cannot place an order with quantity == 0", http.StatusInternalServerError)
+	} else if o.Quantity > 0 {
+		sellOrder = true
+	} else {
+		sellOrder = false
 	}
 	jsonBody := createRequestBody(o)
 	response, responseError := http.Post(s.marketHost + "/order/", "application/json", jsonBody)
@@ -282,6 +291,16 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	var p Position
 	json.NewDecoder(response.Body).Decode(&p)
 	s.updateAccount(p.Order.Username, p.Order.Ticker, p.Order.Quantity, p.Price)
-	fmt.Println(s.data[p.Order.Username])
+	var responseMessage = make(map[string]string)
+	if sellOrder {
+		responseMessage["message"] = "Successful sell order!" 
+	} else {
+		responseMessage["message"] = "Successful buy order!"
+	}
+	if err := json.NewEncoder(w).Encode(responseMessage); err != nil {
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+		return
+	}
+	
 
 }

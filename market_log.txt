@@ -1,5 +1,5 @@
-LOG: 2024/12/08 19:35:54 Ticker: JNJ, Current Price: 178.65
-LOG: 2024/12/08 19:35:54 Ticker: GOOGL, Current Price: 3541.32
-LOG: 2024/12/08 19:35:54 Ticker: AAPL, Current Price: 168.52
-LOG: 2024/12/08 19:35:54 Ticker: TSLA, Current Price: 772.58
-LOG: 2024/12/08 19:35:54 Ticker: AMZN, Current Price: 113.54
+LOG: 2024/12/08 20:49:55 Ticker: AAPL, Current Price: 155.87
+LOG: 2024/12/08 20:49:55 Ticker: TSLA, Current Price: 578.34
+LOG: 2024/12/08 20:49:55 Ticker: AMZN, Current Price: 78.36
+LOG: 2024/12/08 20:49:55 Ticker: JNJ, Current Price: 217.83
+LOG: 2024/12/08 20:49:55 Ticker: GOOGL, Current Price: 6614.11
