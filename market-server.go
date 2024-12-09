@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNJ", "GOOGL"}
 type MarketServer struct {
@@ -185,6 +186,7 @@ func (s *MarketServer) updateStock(ticker string, newPrice float64) {
 	defer s.mu.Unlock()
 	if stock, ok := s.data[ticker]; ok {
 		stock.CurrentPrice = newPrice
+		stock.LastUpdated = time.Now().String()
 	}
 }
 
