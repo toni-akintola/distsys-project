@@ -1,29 +1,28 @@
+import json
 import time
 import os
 
 # user can run this in a terminal to see a continuously-updated market
 # pulling from the log so only displaying ticker and price but this can be changed
 
-log = "market_log.txt"
+log = "stocks.json"
 
 seen = {}
 
 
 def read_log():
     with open(log, "r") as fp:
-        lines = fp.readlines()
-    return lines
+        data = json.load(fp)
+    return data
 
 
-def process(lines):
+def process(data):
     # stocks [ticker] = price
     stocks = {}
-    for line in lines:
-        if line.startswith("LOG:"):
-            parts = line.strip().split(" ")
-            ticker = parts[4].strip(",")
-            price = parts[7]
-            stocks[ticker] = float(price)
+    for stock in data:
+        ticker = stock["ticker"]
+        price = stock["currentPrice"]
+        stocks[ticker] = price
     return stocks
 
 
@@ -39,8 +38,8 @@ def detect_changes():
     changed = False
 
     global seen
-    lines = read_log()
-    stocks = process(lines)
+    data = read_log()
+    stocks = process(data)
 
     for ticker, price in stocks.items():
         if ticker not in seen or seen[ticker] != price:
