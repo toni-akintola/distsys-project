@@ -13,6 +13,7 @@ import (
 	"time"
 )
 var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNJ", "GOOGL"}
+const PRICE_SHIFT = 0.01
 type MarketServer struct {
 	data map[string]*Stock
 	mu     sync.RWMutex       // Mutex for thread-safe access
@@ -44,72 +45,72 @@ func loadStocksFromFile() ([]Stock, error) {
 }
 
 
-func (s *MarketServer) readLog() {
-	data, err := ioutil.ReadFile("stocks.json")
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
-	}
+// func (s *MarketServer) readLog() {
+// 	data, err := ioutil.ReadFile("stocks.json")
+// 	if err != nil {
+// 		fmt.Println("Error reading file:", err)
+// 		return
+// 	}
 
-	var rawData map[string][]map[string]interface{}
-	err = json.Unmarshal(data, &rawData)
-	if err != nil {
-		fmt.Println("Error parsing JSON:", err)
-		return
-	}
+// 	var rawData map[string][]map[string]interface{}
+// 	err = json.Unmarshal(data, &rawData)
+// 	if err != nil {
+// 		fmt.Println("Error parsing JSON:", err)
+// 		return
+// 	}
 
-	for _, rawStock := range rawData["stocks"] {
+// 	for _, rawStock := range rawData["stocks"] {
 
-		// Extract and parse fields
-		ticker, _ := rawStock["ticker"].(string)
-		companyName, _ := rawStock["companyName"].(string)
-		assetType, _ := rawStock["assetType"].(string)
-		currency, _ := rawStock["currency"].(string)
-		lastUpdated, _ := rawStock["lastUpdated"].(string)
-
-
-		// Parse numeric fields
-		currentPrice := 0.0
-		volume := 0.0
-		volatility := 0.0
-		signTendency := 0.0
-
-		if cp, ok := rawStock["currentPrice"].(float64); ok {
-			currentPrice = cp
-		}
-
-		if vol, ok := rawStock["volume"].(float64); ok {
-			volume = vol
-		}
-
-		if vola, ok := rawStock["volatility"].(float64); ok {
-			volatility = vola
-		}
-
-		if st, ok := rawStock["signTendency"].(float64); ok {
-			signTendency = st
-		}
+// 		// Extract and parse fields
+// 		ticker, _ := rawStock["ticker"].(string)
+// 		companyName, _ := rawStock["companyName"].(string)
+// 		assetType, _ := rawStock["assetType"].(string)
+// 		currency, _ := rawStock["currency"].(string)
+// 		lastUpdated, _ := rawStock["lastUpdated"].(string)
 
 
+// 		// Parse numeric fields
+// 		currentPrice := 0.0
+// 		volume := 0.0
+// 		volatility := 0.0
+// 		signTendency := 0.0
+
+// 		if cp, ok := rawStock["currentPrice"].(float64); ok {
+// 			currentPrice = cp
+// 		}
+
+// 		if vol, ok := rawStock["volume"].(float64); ok {
+// 			volume = vol
+// 		}
+
+// 		if vola, ok := rawStock["volatility"].(float64); ok {
+// 			volatility = vola
+// 		}
+
+// 		if st, ok := rawStock["signTendency"].(float64); ok {
+// 			signTendency = st
+// 		}
 
 
-		// Create Stock Struct
-		stock := &Stock{
-			Ticker:       ticker,
-			CompanyName:  companyName,
-			AssetType:    assetType,
-			CurrentPrice: currentPrice,
-			Currency:     currency,
-			LastUpdated:  lastUpdated,
-			Volume:       volume,
-			Volatility:   volatility,
-			SignTendency: signTendency,
-		}
 
-		s.data[ticker] = stock
-		fmt.Println("Parsed stock:", stock)
-	}
-}
+
+// 		// Create Stock Struct
+// 		stock := &Stock{
+// 			Ticker:       ticker,
+// 			CompanyName:  companyName,
+// 			AssetType:    assetType,
+// 			CurrentPrice: currentPrice,
+// 			Currency:     currency,
+// 			LastUpdated:  lastUpdated,
+// 			Volume:       volume,
+// 			Volatility:   volatility,
+// 			SignTendency: signTendency,
+// 		}
+
+// 		s.data[ticker] = stock
+// 		fmt.Println("Parsed stock:", stock)
+// 	}
+// }
 
 func (s *MarketServer) handleGetStock(w http.ResponseWriter, r *http.Request) {
 	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
@@ -161,6 +162,7 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error unmarshaling JSON:", err)
 		return
 	}
+	
 	stock, _ := s.getStock(order.Ticker)
 	position := Position{Order: order, Price: stock.CurrentPrice}
 
@@ -168,6 +170,12 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(position); err != nil {
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
 	}
+	// Compute the degree to which the order updates the market
+	dPrice := stock.CurrentPrice * (PRICE_SHIFT * order.Quantity)
+	if order.Quantity < 0 {
+		dPrice *= -1
+	} 
+	s.updateStock(order.Ticker, stock.CurrentPrice + stock.CurrentPrice * dPrice)
 	
 }
 

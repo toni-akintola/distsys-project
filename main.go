@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -15,8 +16,16 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 func main() {
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
+	MARKET_PORT := os.Getenv("MARKET_PORT")
+	if MARKET_PORT == "" {
+		MARKET_PORT = "9444"
+	}
+	EXECUTOR_PORT := os.Getenv("EXECUTOR_PORT")
+	if EXECUTOR_PORT == "" {
+		EXECUTOR_PORT = "9445"
+	}
 	marketHost := "http://localhost:9444"
-	executorServer, _ := newExecutorServer(marketHost)
+	executorServer, _ := newExecutorServer(MARKET_PORT)
 	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
 	
 	http.HandleFunc("/", getRoot)
@@ -43,14 +52,14 @@ func main() {
 	// Start the servers in separate goroutines
 	go func() {
 		// I'm working on the student machines and this is in the range of ports that work LOL
-		fmt.Println("Starting market server on port 9444.")
+		fmt.Println("Starting market server on port " + MARKET_PORT + ".")
 		if err := server1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Market server failed: %v\n", err)
 		}
 	}()
 
 	go func() {
-		fmt.Println("Starting executor server on port 9445.")
+		fmt.Println("Starting executor server on port 9445 " + EXECUTOR_PORT + ".")
 		if err := server2.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Executor server failed: %v\n", err)
 		}
