@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/rand/v2"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -29,6 +29,20 @@ type Stock struct {
 	Volatility float64 `json:"volatility"`
 	SignTendency float64 `json:"signTendency"`
 }
+
+func loadStocksFromFile() ([]Stock, error) {
+	data, err := ioutil.ReadFile("stocks.json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file", err)
+	}
+	var stocks []Stock
+	err = json.Unmarshal(data, &stocks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON", err)
+	}
+	return stocks, nil
+}
+
 
 func (s *MarketServer) readLog() {
 	data, err := ioutil.ReadFile("stocks.json")
@@ -158,7 +172,7 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *MarketServer) randomUpdate() {
-	x := rand.IntN(len(TICKERS))
+	x := rand.Intn(len(TICKERS))
 	ticker := TICKERS[x]
 	stock, err := s.getStock(ticker) 
 	if err != nil {
@@ -210,7 +224,15 @@ func (s *MarketServer) writeLog() error {
 }
 
 func (s *MarketServer) initializeMarket() {
-	s.data = make(map[string]*Stock, 0);
-	s.readLog();
+	stocks, err := loadStocksFromFile()
+	if err != nil {
+		fmt.Println("error loading stocks:", err)
+		return
+	}
+	s.data = make(map[string]*Stock);
+	for _, stock := range stocks {
+		s.data[stock.Ticker] = &stock
+	}
+	fmt.Println("market initialized with stocks:", s.data)
 }
  
