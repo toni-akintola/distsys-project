@@ -19,8 +19,8 @@ South Bend Bets is a mock trading platform where users can create accounts, view
 
 1. **Clone the Repository**:
 ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/toni-akintola/distsys-project.git
+   cd distsys-project
 ```
 
 2. **Version check**:
