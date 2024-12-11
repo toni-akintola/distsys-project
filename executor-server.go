@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -233,12 +232,12 @@ func (s *ExecutorServer) handleGetStock(w http.ResponseWriter, r *http.Request) 
 	}
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("Failed to read response body.")
+	json.NewDecoder(response.Body).Decode(&result)
+
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+		return
 	}
-	json.Unmarshal([]byte(body), &result)
-	fmt.Println(result)
 
 }
 
@@ -253,12 +252,13 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 
 	defer response.Body.Close()
 	fmt.Println("Response status:", response.Status)
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("Failed to read response body.")
+
+	json.NewDecoder(response.Body).Decode(&result)
+
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
+		return
 	}
-	json.Unmarshal([]byte(body), &result)
-	fmt.Println(result)
 
 }
 
@@ -297,12 +297,15 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	var p Position
 	json.NewDecoder(response.Body).Decode(&p)
 	s.updateAccount(p.Order.Username, p.Order.Ticker, p.Order.Quantity, p.Price)
-	var responseMessage = make(map[string]string)
+	var responseMessage = make(map[string]interface{})
 	if sellOrder {
 		responseMessage["message"] = "Successful sell order!" 
 	} else {
 		responseMessage["message"] = "Successful buy order!"
 	}
+	responseMessage["price"] = p.Price
+	responseMessage["ticker"] = p.Order.Ticker
+	responseMessage["quantity"] = p.Order.Quantity
 	if err := json.NewEncoder(w).Encode(responseMessage); err != nil {
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
 		return

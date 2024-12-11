@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -13,12 +15,30 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+		// First server
+	listener1, err := net.Listen("tcp", ":0") // OS assigns a random port
+	if err != nil {
+		panic(err)
+	}
+	defer listener1.Close()
+
+	marketPort := listener1.Addr().(*net.TCPAddr).Port
+	fmt.Printf("Market server is listening on port %d\n", marketPort)
+
+	// Second server
+	listener2, err := net.Listen("tcp", ":0") // OS assigns a random port
+	if err != nil {
+		panic(err)
+	}
+	defer listener2.Close()
+	executorPort := listener2.Addr().(*net.TCPAddr).Port
+
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
-	marketHost := "http://student13.cse.nd.edu:9444"
+	marketHost := "http://localhost:" + strconv.Itoa(marketPort)
 	executorServer, _ := newExecutorServer(marketHost)
+
 	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
-	
 	http.HandleFunc("/", getRoot)
 	mux1.HandleFunc("/all-stocks/", marketServer.handleGetAllStocks)
 	mux1.HandleFunc("/single-stock/", marketServer.handleGetStock)
@@ -28,30 +48,42 @@ func main() {
 	mux2.HandleFunc("/single-stock/", executorServer.handleGetStock)
 	mux2.HandleFunc("/all-stocks/", executorServer.handleGetAllStocks)
 	mux2.HandleFunc("/order/", executorServer.handleOrder)
-	// Create the first server
+
+
+
 	server1 := &http.Server{
-		Addr:    ":9444",
-		Handler: mux1,
+		Handler: mux1, // Replace with your mux1
 	}
+	go func() {
+		if err := server1.Serve(listener1); err != nil && err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
 
-	// Create the second server
+
+	fmt.Printf("Executor server is listening on port %d\n", executorPort)
+
 	server2 := &http.Server{
-		Addr:    ":9445",
-		Handler: mux2,
+		Handler: mux2, // Replace with your mux2
 	}
+	go func() {
+		if err := server2.Serve(listener2); err != nil && err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
 
+
+	
 	// Start the servers in separate goroutines
 	go func() {
 		// I'm working on the student machines and this is in the range of ports that work LOL
-		fmt.Println("Starting market server on port 9444.")
-		if err := server1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server1.Serve(listener1); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Market server failed: %v\n", err)
 		}
 	}()
 
 	go func() {
-		fmt.Println("Starting executor server on port 9445.")
-		if err := server2.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server2.Serve(listener2); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Executor server failed: %v\n", err)
 		}
 	}()
