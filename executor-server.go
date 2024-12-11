@@ -78,11 +78,7 @@ func (s *ExecutorServer) saveAccounts() error {
 	defer file.Close()
 	
 	encoder := json.NewEncoder(file)
-	var accounts []Account
-	for _, account := range s.data {
-		accounts = append(accounts, account)
-	}
-	if err := encoder.Encode(accounts); err != nil {
+	if err := encoder.Encode(s.data); err != nil {
 		fmt.Println("unable to encode accounts")
 		return fmt.Errorf("unable to encode accounts")
 	}
@@ -190,7 +186,11 @@ func (s *ExecutorServer) accountHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(account); err != nil {
+	var responseMessage = make(map[string]interface{})
+	responseMessage["username"] = account.Username
+	responseMessage["balance"] = account.Balance
+	responseMessage["positions"] = account.positions
+	if err := json.NewEncoder(w).Encode(responseMessage); err != nil {
 		http.Error(w, "error encoding JSON", http.StatusInternalServerError)
 		return
 	}
@@ -247,7 +247,6 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	var o Order
 	err := json.NewDecoder(r.Body).Decode(&o)
-	// requestBody, err := unmarshalJSONBody[Order](r)
 	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil{
@@ -258,6 +257,7 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	var sellOrder bool
 	if o.Quantity == 0 {
 		http.Error(w, "Cannot place an order with quantity == 0", http.StatusBadRequest)
+		return
 	} else if o.Quantity < 0 {
 		sellOrder = true
 	} else {
