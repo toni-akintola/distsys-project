@@ -85,11 +85,9 @@ func main() {
 			}
 		}
 			
-	}()
-	
+	}()	
 
 	// Block the main goroutine
 	select {}
-
 		
 }
