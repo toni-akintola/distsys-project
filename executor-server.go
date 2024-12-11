@@ -68,24 +68,6 @@ func readAccounts(filename string) ([]Account, error) {
 	return accounts, nil
 }
 
-// handleAuthenticate gives a client an auth token that they can use to make subsequent requests to the executor.
-func (s *ExecutorServer) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "use a POST request", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// parse JSON
-	var username string
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&username); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
-		return
-	}
-
-	fmt.Println(username)
-}
-
 // saveAccounts writes account information to file after we update
 func (s *ExecutorServer) saveAccounts() error {
 	
@@ -194,13 +176,12 @@ func (s *ExecutorServer) updateAccount(username string, ticker string, quantity 
 
 // AccountHandler handles HTTP requests for account information
 func (s *ExecutorServer) accountHandler(w http.ResponseWriter, r *http.Request) {
-	username := strings.TrimPrefix(r.URL.Path, "/user/")
+	username := strings.TrimPrefix(r.URL.Path, "/account/")
 	if username == "" {
 		http.Error(w, "please enter username", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Printf("received request for username %s\n", username)
 
 	account, found := s.getAccount(username)
 	if !found {
@@ -219,19 +200,20 @@ func (s *ExecutorServer) handleGetStock(w http.ResponseWriter, r *http.Request) 
 
 	ticker := strings.TrimPrefix(r.URL.Path, "/single-stock/")
 	if ticker == "" {
-		http.Error(w, "please enter username", http.StatusBadRequest)
+		http.Error(w, "please enter a ticker", http.StatusBadRequest)
 		return
 	}
+	
 	
 	response, responseError := http.Get(s.marketHost + "/single-stock/" + ticker)
 
 	var result map[string]interface{}
 	if responseError != nil {
 		fmt.Println("Error sending request:", responseError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	defer response.Body.Close()
-	fmt.Println("Response status:", response.Status)
 	json.NewDecoder(response.Body).Decode(&result)
 
 	if err := json.NewEncoder(w).Encode(result); err != nil {
@@ -247,11 +229,11 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 	var result map[string]interface{}
 	if responseError != nil {
 		fmt.Println("Error sending request:", responseError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	defer response.Body.Close()
-	fmt.Println("Response status:", response.Status)
 
 	json.NewDecoder(response.Body).Decode(&result)
 
@@ -265,18 +247,17 @@ func (s *ExecutorServer) handleGetAllStocks(w http.ResponseWriter, r *http.Reque
 func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	var o Order
 	err := json.NewDecoder(r.Body).Decode(&o)
-	fmt.Println(o)
 	// requestBody, err := unmarshalJSONBody[Order](r)
 	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil{
 		fmt.Println("Error unmarshalling JSON body:", err)
-		http.Error(w, "error unmarshalling JSON", http.StatusInternalServerError)
+		http.Error(w, "error unmarshalling JSON", http.StatusBadRequest)
 		return
 	}
 	var sellOrder bool
 	if o.Quantity == 0 {
-		http.Error(w, "Cannot place an order with quantity == 0", http.StatusInternalServerError)
+		http.Error(w, "Cannot place an order with quantity == 0", http.StatusBadRequest)
 	} else if o.Quantity < 0 {
 		sellOrder = true
 	} else {
@@ -296,6 +277,10 @@ func (s *ExecutorServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 
 	var p Position
 	json.NewDecoder(response.Body).Decode(&p)
+	if s.data[p.Order.Username].Balance - p.Price * p.Order.Quantity < 0 {
+		http.Error(w, "Sorry, you do not have sufficient funds to place this order.", http.StatusBadRequest)
+		return
+	}
 	s.updateAccount(p.Order.Username, p.Order.Ticker, p.Order.Quantity, p.Price)
 	var responseMessage = make(map[string]interface{})
 	if sellOrder {

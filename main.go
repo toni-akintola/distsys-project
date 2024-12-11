@@ -1,17 +1,54 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got / request\n")
-	io.WriteString(w, "This is my website!\n")
+	io.WriteString(w, "Welcome to South Bend Bets!\n")
+}
+
+func updateNameServer(port int, name string) {
+	// Define the message as a map
+	message := map[string]interface{}{
+		"type":    "south-bend-bets",
+		"owner":   "oakintol",
+		"port":    port,
+		"project": name,
+	}
+
+	// Marshal the message into JSON
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		panic(err)
+	}
+
+	// Resolve the address of the catalog server
+	target, err := net.ResolveUDPAddr("udp", "catalog.cse.nd.edu:9097")
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a UDP connection
+	conn, err := net.DialUDP("udp", nil, target)
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	// Send the message
+	_, err = conn.Write(messageBytes)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
@@ -35,15 +72,20 @@ func main() {
 
 	marketServer := &MarketServer{}
 	marketServer.initializeMarket()
-	marketHost := "http://localhost:" + strconv.Itoa(marketPort)
+	hostName, err := os.Hostname()
+	if err != nil {
+		return
+	}
+	marketHost := "http://" + hostName + ":" + strconv.Itoa(marketPort)
 	executorServer, _ := newExecutorServer(marketHost)
+	updateNameServer(executorPort, hostName)
 
 	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
 	http.HandleFunc("/", getRoot)
 	mux1.HandleFunc("/all-stocks/", marketServer.handleGetAllStocks)
 	mux1.HandleFunc("/single-stock/", marketServer.handleGetStock)
 	mux1.HandleFunc("/order/", marketServer.handleOrder)
-	mux2.HandleFunc("/user/", executorServer.accountHandler)
+	mux2.HandleFunc("/account/", executorServer.accountHandler)
 	mux2.HandleFunc("/create-account/", executorServer.handleCreateAccount)
 	mux2.HandleFunc("/single-stock/", executorServer.handleGetStock)
 	mux2.HandleFunc("/all-stocks/", executorServer.handleGetAllStocks)
@@ -91,9 +133,9 @@ func main() {
 	time.Sleep(2 * time.Second)
 	const numWorkers int = 5
 	
-	// Set up a timer so we can write to the log every 60 seconds
-	logTicker := time.NewTicker(60 * time.Second)
-	defer logTicker.Stop()
+	// Set up a timer so we can update the name server every 60 seconds
+	nameServerTicker := time.NewTicker(60 * time.Second)
+	defer nameServerTicker.Stop()
 
 	updateTicker := time.NewTicker(2 * time.Second)
 	defer updateTicker.Stop()
@@ -108,9 +150,16 @@ func main() {
 		}
 			
 	}()
+
+	go func (){
+		for range nameServerTicker.C {
+			updateNameServer(executorPort, hostName)
+		}
+			
+	}()
 	
 
-	// Block the main goroutine
+	// Block the main goroutine and select whichever goroutine is ready.
 	select {}
 
 		
