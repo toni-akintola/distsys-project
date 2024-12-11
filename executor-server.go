@@ -78,13 +78,18 @@ func (s *ExecutorServer) saveAccounts() error {
 	defer file.Close()
 	
 	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(s.data); err != nil {
+	var accounts []Account
+	for _, account := range s.data {
+		accounts = append(accounts, account)
+	}
+	if err := encoder.Encode(accounts); err != nil {
 		fmt.Println("unable to encode accounts")
 		return fmt.Errorf("unable to encode accounts")
 	}
 
 	return nil
 }
+
 
 // handleCreateAccount creates a new account
 func (s *ExecutorServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
