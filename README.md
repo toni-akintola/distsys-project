@@ -96,7 +96,8 @@ South Bend Bets is a mock trading platform where users can create accounts, view
 **Method**: `POST`  
 **Request Body**:
 ```json
-{   "quantity": 10,   "ticker": "AAPL",   "username": "example_user" }`
+{   "quantity": 10,   "ticker": "AAPL",   "username": "example_user" }
+```
 
 **Response**:
 ```
