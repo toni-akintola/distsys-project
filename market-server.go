@@ -13,7 +13,7 @@ import (
 	"time"
 )
 var TICKERS = []string{"AAPL", "TSLA", "AMZN", "JNJ", "GOOGL"}
-const PRICE_SHIFT = 0.01
+const PRICE_SHIFT = 0.0001
 type MarketServer struct {
 	data map[string]*Stock
 	mu     sync.RWMutex       // Mutex for thread-safe access
@@ -38,6 +38,7 @@ func loadStocksFromFile() ([]Stock, error) {
 	}
 	var stocks []Stock
 	err = json.Unmarshal(data, &stocks)
+	fmt.Println(stocks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON", err)
 	}
@@ -141,6 +142,8 @@ func (s *MarketServer) handleGetAllStocks(w http.ResponseWriter, r *http.Request
 }
 
 func (s MarketServer) getStock(ticker string) (*Stock, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()	
 	stock, exists := s.data[ticker]
 	// so that we do not dereference nonexistent pointer
 	if !exists {
@@ -174,7 +177,8 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 	dPrice := stock.CurrentPrice * (PRICE_SHIFT * order.Quantity)
 	if order.Quantity < 0 {
 		dPrice *= -1
-	} 
+	}
+	fmt.Println(dPrice) 
 	s.updateStock(order.Ticker, stock.CurrentPrice + stock.CurrentPrice * dPrice)
 	
 }
@@ -182,7 +186,8 @@ func (s *MarketServer) handleOrder(w http.ResponseWriter, r *http.Request) {
 func (s *MarketServer) randomUpdate() {
 	x := rand.Intn(len(TICKERS))
 	ticker := TICKERS[x]
-	stock, err := s.getStock(ticker) 
+	stockPtr, err := s.getStock(ticker)
+	stock := *stockPtr
 	if err != nil {
 		fmt.Println(err, ticker)
 		return
@@ -194,9 +199,8 @@ func (s *MarketServer) randomUpdate() {
 	} else {
 		volatility = -1 * stock.Volatility
 	}
-
+	fmt.Println(stock.CurrentPrice, volatility)
 	dPrice := stock.CurrentPrice * volatility 
-	fmt.Println("Ticker: ", ticker, "Old Price: ", stock.CurrentPrice, "New Price: ", stock.CurrentPrice + dPrice)
 	s.updateStock(ticker, stock.CurrentPrice + dPrice)
 	
 }
@@ -219,15 +223,25 @@ func (s *MarketServer) writeLog() error {
 	}
 	defer file.Close()
 	
-	encoder := json.NewEncoder(file)
+	// encoder := json.NewEncoder(file)
 	var stocks []Stock
 	for _, stock := range s.data {
 		stocks = append(stocks, *stock)
+		fmt.Println(*stock)
 	}
-	if err := encoder.Encode(stocks); err != nil {
-		fmt.Println("unable to encode stocks")
-		return fmt.Errorf("unable to encode stocks")
+	// Encode the `stocks` slice to JSON
+	jsonBytes, err := json.Marshal(stocks)
+	if err != nil {
+			fmt.Println("unable to encode stocks", err)
+			return fmt.Errorf("unable to encode stocks")
 	}
+
+	// Write the JSON bytes to the file
+	if _, err := file.Write(jsonBytes); err != nil {
+			fmt.Println("error writing to file", err)
+			return err
+	}
+
 	return nil
 }
 
@@ -239,7 +253,9 @@ func (s *MarketServer) initializeMarket() {
 	}
 	s.data = make(map[string]*Stock);
 	for _, stock := range stocks {
-		s.data[stock.Ticker] = &stock
+		newStock := Stock{}
+		newStock = stock
+		s.data[stock.Ticker] = &newStock
 	}
 	fmt.Println("market initialized with stocks:", s.data)
 }
