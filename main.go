@@ -82,14 +82,14 @@ func main() {
 
 	mux1, mux2 := http.NewServeMux(), http.NewServeMux()
 	http.HandleFunc("/", getRoot)
-	mux1.HandleFunc("/all-stocks/", marketServer.handleGetAllStocks)
-	mux1.HandleFunc("/single-stock/", marketServer.handleGetStock)
-	mux1.HandleFunc("/order/", marketServer.handleOrder)
-	mux2.HandleFunc("/account/", executorServer.accountHandler)
-	mux2.HandleFunc("/create-account/", executorServer.handleCreateAccount)
-	mux2.HandleFunc("/single-stock/", executorServer.handleGetStock)
-	mux2.HandleFunc("/all-stocks/", executorServer.handleGetAllStocks)
-	mux2.HandleFunc("/order/", executorServer.handleOrder)
+	mux1.HandleFunc("/all-stocks", marketServer.handleGetAllStocks)
+	mux1.HandleFunc("/single-stock", marketServer.handleGetStock)
+	mux1.HandleFunc("/order", marketServer.handleOrder)
+	mux2.HandleFunc("/account", executorServer.accountHandler)
+	mux2.HandleFunc("/create-account", executorServer.handleCreateAccount)
+	mux2.HandleFunc("/single-stock", executorServer.handleGetStock)
+	mux2.HandleFunc("/all-stocks", executorServer.handleGetAllStocks)
+	mux2.HandleFunc("/order", executorServer.handleOrder)
 
 
 
